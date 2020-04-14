@@ -24,6 +24,7 @@
         "https://*.hana.ondemand.com/itspaces/*"
       ],
       "js": [
+        "/lib/rawdeflate/rawdeflate.js",
         "/lib/prettify/prettify.js",
         "/lib/jszip/jszip.min.js",
         "contentScript.js"
