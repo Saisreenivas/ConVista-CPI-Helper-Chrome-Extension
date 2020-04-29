@@ -319,6 +319,11 @@ async function showBigPopup(content, header) {
   }
 }
 
+function getSelectedElement() {
+  classes = document.getElementsByClassName("sapGalileiSelected");
+  return classes[0].id;
+}
+
 async function clickTrace(e) {
 
   var formatHeadersAndPropertiesToTable = function (inputList) {
@@ -478,6 +483,8 @@ async function clickTrace(e) {
     return result;
   }
 
+
+
   var formatLogContent = function (inputList) {
     result = "<table><tr><th>Name</th><th>Value</th></tr>"
     var even = "";
@@ -518,19 +525,67 @@ async function clickTrace(e) {
     return html;
   }
 
-  var getDebugGroovyContent = async function (object) {
+  var getTabMoreContent = async function (object) {
+
+    var html = document.createElement("div");
+    html.classList.add("innerTabMargin")
+
+    var groovyIde = document.createElement("div");
+
+    groovyIdeHeader = document.createElement("h3");
+    groovyIdeHeader.innerText = "GroovyIde by Fatih Pense";
+    groovyIdeText = document.createElement("p");
+    groovyIdeText.innerText = "The GroovyIDE for CPI offers the possibility to edit and debug groovy scripts in your browser."
 
 
+    var scriptObjects = await getScripts();
 
+    if (scriptObjects && scriptObjects.length > 0) {
+      var select = document.createElement("select");
+      select.id = "cpiHelper_inlineTrace_groovyScriptSelector"
 
-    var traceId = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/MessageProcessingLogRunSteps(RunId='" + object.runId + "',ChildCount=" + object.childCount + ")/TraceMessages?$format=json", true)).d.results[0].TraceId;
+      var nonOption = document.createElement("option");
+      nonOption.innerText = "---";
+      nonOption.value = "";
 
-    let properties = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/ExchangeProperties?$format=json", true)).d.results;
-    let headers = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/Properties?$format=json", true)).d.results;
-    let body = await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/$value", true);
+      select.appendChild(nonOption);
 
+      var selctedElement = getSelectedElement();
 
+      for (script of scriptObjects) {
+        let option = document.createElement("option");
+        let scriptName = script.allAttributes.script.value.substr(8);
+        option.innerText = script.name + " - " + scriptName;
+        option.value = scriptName + "###" + script.allAttributes.scriptFunction.value
+        if ("BPMNShape_" + script.id == selctedElement) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      }
 
+      groovyIde.appendChild(select);
+
+      var debugButton = document.createElement("button");
+
+      var scriptAttributes;
+
+      debugButton.innerText = "Send to Groovy Debugger";
+      debugButton.onclick = (event) => {
+        select = document.getElementById("cpiHelper_inlineTrace_groovyScriptSelector");
+        for (child of select.children) {
+          if (child.selected) {
+            scriptAttributes = child.value.split("###");
+          }
+        }
+        openGroovyIde(object, scriptAttributes[0], scriptAttributes[1]);
+      }
+      groovyIde.appendChild(debugButton);
+
+    }
+
+    html.appendChild(groovyIde);
+
+    return html;
 
   }
 
@@ -579,8 +634,8 @@ async function clickTrace(e) {
         runId: runId,
         traceType: "logContent"
       }, {
-        label: "Debug Groovy",
-        content: getDebugGroovyContent,
+        label: "More",
+        content: getTabMoreContent,
         active: false,
         childCount: childCount,
         runId: runId
@@ -1457,22 +1512,27 @@ function infoPopupClose() {
 //function to get the iFlow name from the URL
 function getIflowName() {
   var url = window.location.href;
-  let dateRegexp = /\/integrationflows\/(?<integrationFlowId>[0-9a-zA-Z_\-.]+)/;
+  let dateRegexp = /contentpackage\/(?<packageId>[0-9a-zA-Z_\-.]+)\/integrationflows\/(?<integrationFlowId>[0-9a-zA-Z_\-.]+)/;
   var result;
 
   try {
     let groups = url.match(dateRegexp).groups;
 
     result = groups.integrationFlowId;
+    packageId = groups.packageId;
     console.log("Found iFlow:" + result);
+
+    cpiData.integrationFlowId = result;
+    cpiData.packageId = packageId
+    return result;
 
   } catch (e) {
     console.log(e);
     console.log("no integrationflow found");
+    return null;
+
   }
 
-  cpiData.integrationFlowId = result;
-  return result;
 }
 
 //we have to check for url changes to deactivate sidebar and to inject buttons, when on iflow site.
@@ -1619,12 +1679,69 @@ function storeVisitedIflowsForPopup() {
   });
 }
 
+async function getScripts() {
+
+  // var workspace = await makeCallPromise("GET", "/itspaces/odata/1.0/workspace.svc/ContentEntities.ContentPackages('" + cpiData.packageId + "')?$format=json", true);
+
+  //extract reg_id where TechnicalName == packageId
+
+  var flowList = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/1.0/workspace.svc/ContentEntities.ContentPackages('" + cpiData.packageId + "')/Artifacts?&$format=json", true)).d.results;
+  var regId = flowList.find(i => i.Name == cpiData.integrationFlowId).reg_id;
 
 
-function openGroovyIde(object) {
-  var confirm = getConfirmation("You are redirected to https://groovyide.com/cpi. Please notice that the ConVista CPI Helper is not responsible for any third party content.\nDo you want to proceed?")
+  //extract the field “reg_id” from the object where the field “Name” equals the {iflow-id} from the response and save it as variable “iflow-tech-id”.
+
+  cpiData.iflowTechId = regId;
+  var httpreq = await makeCallPromise("GET", "/itspaces/api/1.0/workspace/" + cpiData.iflowTechId + "/artifacts/" + cpiData.iflowTechId + "/entities/" + cpiData.iflowTechId + "/iflows/" + cpiData.integrationFlowId + "?&$format=json");
+  var elements = JSON.parse(httpreq).propertyViewModel.listOfDefaultFlowElementModel;
+
+
+  let scriptElements = elements.filter(el => el.activityType == "GroovyScript");
+
+  return scriptElements;
+
+}
+
+async function getScript(scriptName) {
+  var scriptJson = JSON.parse(await makeCallPromise("GET", "/itspaces/api/1.0/workspace/" + cpiData.iflowTechId + "/artifacts/" + cpiData.iflowTechId + "/entities/" + cpiData.iflowTechId + "/iflows/" + cpiData.integrationFlowId + "/script//" + scriptName)).content;
+
+  return scriptJson;
+
+}
+
+
+async function openGroovyIde(object, scriptName, scriptFunction) {
+
+
+  var confirm = getConfirmation("You are redirected to https://groovyide.com/cpi. Please notice that the ConVista CPI Helper is not responsible for any third party content.\nDo you want to proceed?");
   if (confirm) {
-    var string = '{"input":{"body":"hallo","headers":{"oldHeader":"Hello!"},"properties":{}},"script":{"code":"def Message processData(Message message) { def body = message.getBody(); \\nmessage.setBody((body));    return message;}"}}';
+
+    function makeHeadersAndPropertiesToObject(list) {
+      var result = {};
+      list.forEach(item => {
+        result[item.Name] = item.Value;
+      });
+
+      return result;
+    }
+
+    var traceId = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/MessageProcessingLogRunSteps(RunId='" + object.runId + "',ChildCount=" + object.childCount + ")/TraceMessages?$format=json", true)).d.results[0].TraceId;
+
+    let properties = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/ExchangeProperties?$format=json", true)).d.results;
+    let headers = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/Properties?$format=json", true)).d.results;
+    let body = await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/$value", true);
+
+    var payload = { input: {} };
+
+    payload.input.body = body;
+    payload.input.headers = makeHeadersAndPropertiesToObject(headers);
+    payload.input.properties = makeHeadersAndPropertiesToObject(properties);
+
+    payload.script = {};
+    payload.script.code = scriptName ? await getScript(scriptName) : "";
+    payload.script.function = scriptFunction ? scriptFunction : "";
+
+    var string = JSON.stringify(payload); //'{"input":{"body":"hallo","headers":{"oldHeader":"Hello!"},"properties":{}},"script":{"code":"def Message processData(Message message) { def body = message.getBody(); \\nmessage.setBody((body));    return message;}"}}';
 
     function encode_utf8(s) {
       return unescape(encodeURIComponent(s));
@@ -1656,5 +1773,3 @@ checkURLchange();
 setInterval(function () {
   checkURLchange(window.location.href);
 }, 4000);
-
-openGroovyIde();

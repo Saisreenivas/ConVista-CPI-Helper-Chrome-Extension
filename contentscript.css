@@ -40,6 +40,9 @@
 
 /* end snackbar */  
 
+.cpiHelper .innerTabMargin {
+  margin: 1em;
+}
 
 .cpiHelper table#messageList {
 
@@ -344,7 +347,7 @@ word-wrap: break-word;
 cursor: text;
 font-family: monospace;
 font-size: 1.2em;
-padding: 20px;
+padding: 1em;
 display: none;
 }
 
