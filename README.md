@@ -22,6 +22,13 @@ I recommend to read the readme first but if you know what you are doing, you can
 - Last visited iflows in browser-bar-popup
 
 ## Changelog
+### 1.2.2
+- [Bugfix] CPIHelper did not load after tenant update v2
+### 1.2.1
+- [Bugfix] CPIHelper did not load after tenant update
+### 1.2.0
+- [Feature] Select tab icon, text and tenant color for your tenants
+- [Bugfix] Improved compatibility with Cloud Foundry
 ### 1.1.1
 - [Bugfix] Fixed some css issues
 ### 1.1.0
@@ -145,6 +152,7 @@ Many thanks to ConVista Consulting AG in Cologne, Germany. They supported this i
 
 ### Contributers
 >- [Raffael Herrmann](https://github.com/codebude): Speed up handling of large XML structures in beautifier.
+>- [Ivo Vermeer](https://github.com/IvoVermeer): Change icon, text and tenant color
 
 ## License
 [GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)

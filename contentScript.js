@@ -975,14 +975,26 @@ function createElementFromHTML(htmlString) {
   return div.firstChild;
 }
 
-//Wait until side is loaded to inject new buttons
-function waitForElementToDisplay(selector, time) {
-  var elements = document.querySelectorAll(selector);
-  var element;
-  if (elements.length > 0) {
-    for (var i = 0; i < elements.length; i++) {
-      if (elements[i].innerHTML == "Deploy") {
-        element = elements[i];
+function buildButtonBar() {
+  if (!document.getElementById("__buttonxx")) {
+    whatsNewCheck();
+    //create Trace Button
+    var tracebutton = createElementFromHTML('<button id="__buttonxx" data-sap-ui="__buttonxx" title="Enable traces" class="sapMBtn sapMBtnBase spcHeaderActionButton" style="display: inline-block; margin-left: 0px;"><span id="__buttonxx-inner" class="sapMBtnHoverable sapMBtnInner sapMBtnText sapMBtnTransparent sapMFocusable"><span class="sapMBtnContent" id="__button12-content"><bdi id="__button12-BDI-content">Trace</bdi></span></span></button>');
+    //Create Toggle Message Bar Button
+    var messagebutton = createElementFromHTML(' <button id="__buttonxy" data-sap-ui="__buttonxy" title="Messages" class="sapMBtn sapMBtnBase spcHeaderActionButton" style="display: inline-block;"><span id="__buttonxy-inner" class="sapMBtnHoverable sapMBtnInner sapMBtnText sapMBtnTransparent sapMFocusable"><span class="sapMBtnContent" id="__button13-content"><bdi id="__button13-BDI-content">Messages</bdi></span></span></button>');
+    var infobutton = createElementFromHTML(' <button id="__buttoninfo" data-sap-ui="__buttoninfo" title="Info" class="sapMBtn sapMBtnBase spcHeaderActionButton" style="display: inline-block;"><span id="__buttonxy-inner" class="sapMBtnHoverable sapMBtnInner sapMBtnText sapMBtnTransparent sapMFocusable"><span class="sapMBtnContent" id="__button13-content"><bdi id="__button13-BDI-content">Info</bdi></span></span></button>');
+    //append buttons
+    area = document.querySelector("[id*='--iflowObjectPageHeader-actions']");
+    area.appendChild(createElementFromHTML("<br />"));
+    area.appendChild(tracebutton);
+    area.appendChild(messagebutton);
+    area.appendChild(infobutton);
+    tracebutton.addEventListener("click", (btn) => {
+      setLogLevel("TRACE", cpiData.integrationFlowId);
+    });
+    messagebutton.addEventListener("click", (btn) => {
+      if (sidebar.active) {
+        sidebar.deactivate();
       }
     }
     if (element) {
@@ -1030,17 +1042,32 @@ function waitForElementToDisplay(selector, time) {
     setTimeout(function () {
       waitForElementToDisplay(selector, time);
     }, time);
+      else {
+        sidebar.init();
+      }
+    });
+    infobutton.addEventListener("click", (btn) => {
+      getIflowInfo(openIflowInfoPopup);
+    });
   }
 }
 
 //Collect Infos to Iflow
 function getIflowInfo(callback) {
 
-  makeCallPromise("GET", "/itspaces/Operations/com.sap.it.op.tmn.commands.dashboard.webui.IntegrationComponentsListCommand", false, 'application/json').then((response) => {
-    var resp = JSON.parse(response).artifactInformations;
-    resp = resp.find((element) => {
-      return element.symbolicName == cpiData.integrationFlowId;
-    });
+  makeCallPromise("GET", "/itspaces/Operations/com.sap.it.op.tmn.commands.dashboard.webui.IntegrationComponentsListCommand", false).then((response) => {
+    response = new XmlToJson().parse(response)["com.sap.it.op.tmn.commands.dashboard.webui.IntegrationComponentsListResponse"];
+    var resp = response.artifactInformations;
+
+    if (resp.length) {
+      resp = resp.find((element) => {
+        return element.symbolicName == cpiData.integrationFlowId;
+      });
+    } else {
+      if (resp.symbolicName != cpiData.integrationFlowId) {
+        resp = null;
+      }
+    }
     if (!resp) {
       throw "Integration Flow was not found. Probably it is not deployed.";
     }
@@ -1657,8 +1684,7 @@ function handleUrlChange() {
   if (getIflowName()) {
     //if iflow found, inject buttons   
     storeVisitedIflowsForPopup();
-    //buttons
-    waitForElementToDisplay("[id*='-BDI-content']", 1000);
+
   } else {
     //deactivate sidebar if not on iflow page
     if (sidebar.active) {
@@ -1685,8 +1711,10 @@ async function whatsNewCheck() {
     html = `<div id="cpiHelper_WhatsNew">Thank you for using the ConVista CPI Helper. <p>You hace successfully updated to version ${manifestVersion}</p> 
     <h3>Recent Innovations</h3>
     <ul>
-    <li>Version 1.1.0: You can now view and delete variables in the Integration Flow Info-PopUp (Press Info in the right top corner)
-    <li>Version 1.0.0: Activate InlineTrace to debug your Integration Flows directly in the Designer (<a href="https://blogs.sap.com/2020/03/31/cpi-the-next-evolution-see-traces-directly-in-the-integration-flow-designer-of-sap-cloud-platform-integration/" target="_blank">more</a>)
+    <li>Version 1.2.2: If you had issues that CPIHelper improvements wasn't shown in the header bar, this should be fixed now.</li>
+    <li>Version 1.2.0: You can now change the tab icon, text and main color of your different CPI tenants. This is very helpful when you have dev and prod tenant or different customers. You can make these settings on the CPI Helper icon (the cloud) in your browser bar (normally on the top right).</li>
+    <li>Version 1.1.0: You can now view and delete variables in the Integration Flow Info-PopUp (Press Info in the right top corner)</li>
+    <li>Version 1.0.0: Activate InlineTrace to debug your Integration Flows directly in the Designer (<a href="https://blogs.sap.com/2020/03/31/cpi-the-next-evolution-see-traces-directly-in-the-integration-flow-designer-of-sap-cloud-platform-integration/" target="_blank">more</a>)</li> 
   </ul>
      <p>If you like our work you can tell your coworkers about this plug-in. To stay informed about updates, you can follow <a href="https://people.sap.com/dbeckbauer"  target="_blank">me</a> or leave a like or message in the <a href="https://blogs.sap.com/2020/03/31/cpi-the-next-evolution-see-traces-directly-in-the-integration-flow-designer-of-sap-cloud-platform-integration/"  target="_blank">SAP Community</a>.</p>
      <p>The CPI Helper is free and Open Source. If you want to contribute or you have found any bugs than have a look at our <a href="https://github.com/dbeck121/ConVista-CPI-Helper-Chrome-Extension" target="_blank">GitHub Page</a>.</p>
@@ -1742,8 +1770,14 @@ function storeVisitedIflowsForPopup() {
 //start
 checkURLchange();
 setInterval(function () {
+  var elements = document.querySelectorAll("[id$='-BDI-content']");
+  for (var i = 0; i < elements.length; i++) {
+    if (elements[i].innerHTML == "Deploy") {
+      buildButtonBar();
+    }
+  }
   checkURLchange(window.location.href);
-}, 4000);
+}, 3000);
 
 
 
