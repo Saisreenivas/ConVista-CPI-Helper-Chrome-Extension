@@ -5,7 +5,7 @@
   let observerIntervalId; // used to attach a MutationObserver callback
   let hostData = {
     title: 'Cloud Integration',
-    color: '#354a5f',
+    color: '#FFFFFF',
     icon: 'default'
   }
 

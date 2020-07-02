@@ -6,12 +6,11 @@ img.sapMImg.sapMBarChild {
 
 div#shell--toolHeader {
     color: #000000;
-    background-color: #FFFFFF
-;
+    background-color: #FFFFFF;
 }
 
 span#__title0-inner {
-    color: #000000;
+    color: #FFFFFF;
     /* display: none; */
     padding-left: 135px;
     font-weight: bold;

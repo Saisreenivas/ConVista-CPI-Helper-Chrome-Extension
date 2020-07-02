@@ -3,7 +3,7 @@
 
 //cpiData stores data for this extension
 var cpiData = {};
-var URL = "";
+
 //initialize used elements
 cpiData.lastMessageHashList = [];
 cpiData.integrationFlowId = "";
@@ -94,15 +94,15 @@ async function makeCall(type, url, includeXcsrf, payload, callback, contentType)
 }
 
 //opens a new window with the Trace for a MessageGuid
-function openTrace(URL, MessageGuid) {
+function openTrace(MessageGuid) {
 
   //we have to get the RunID first
-  makeCall("GET", URL + "/itspaces/odata/api/v1/MessageProcessingLogs('" + MessageGuid + "')/Runs?$format=json", false, "", (xhr) => {
+  makeCall("GET", "/itspaces/odata/api/v1/MessageProcessingLogs('" + MessageGuid + "')/Runs?$format=json", false, "", (xhr) => {
     if (xhr.readyState == 4) {
       var resp = JSON.parse(xhr.responseText);
       var runId = resp.d.results[0].Id;
 
-      let url = URL + '/itspaces/shell/monitoring/MessageProcessingRun/%7B"parentContext":%7B"MessageMonitor":%7B"artifactKey":"__ALL__MESSAGE_PROVIDER","artifactName":"All%20Artifacts"%7D%7D,"messageProcessingLog":"' + MessageGuid + '","RunId":"' + runId + '"%7D';
+      let url = '/itspaces/shell/monitoring/MessageProcessingRun/%7B"parentContext":%7B"MessageMonitor":%7B"artifactKey":"__ALL__MESSAGE_PROVIDER","artifactName":"All%20Artifacts"%7D%7D,"messageProcessingLog":"' + MessageGuid + '","RunId":"' + runId + '"%7D';
       window.open(url, '_blank');
     }
   })
@@ -114,14 +114,13 @@ function openInfo(url) {
 }
 
 //refresh the logs in message window
-var getLogsTimer1, getLogsTimer2;
+var getLogsTimer;
 var activeInlineItem;
-async function getLogs(URL, messageListId, updateTextId) {
+async function getLogs() {
 
   var createRow = function (elements) {
     var tr = document.createElement("tr");
     elements.forEach(element => {
-      // console.log(element);
       let td = document.createElement("td");
       elements.length == 1 ? td.colSpan = 3 : null;
       typeof (element) == "object" ? td.appendChild(element) : td.innerHTML = element;
@@ -131,75 +130,22 @@ async function getLogs(URL, messageListId, updateTextId) {
   }
 
   //check if iflowid exists
-  // iflowId = cpiData.integrationFlowId;
-  // if (!iflowId) {
-  //   return;
-  // }
-  // alert("makecall");
+  iflowId = cpiData.integrationFlowId;
+  if (!iflowId) {
+    return;
+  }
+
   //get the messagelogs for current iflow
-    // alert("hh" + URL);
-  // console.log(URL + "  " + messageListId);
-  makeCall("GET", URL + "/itspaces/odata/api/v1/MessageProcessingLogs?$top=500&$format=json&$orderby=LogStart desc", false, "", ( xhr) => {
-    // alert("madecall"+ URL);
-    // console.log(URL + " " + xhr.readyState + " " + xhr.responseText);
+  makeCall("GET", "/itspaces/odata/api/v1/MessageProcessingLogs?$filter=IntegrationFlowName eq '" + iflowId + "'&$top=10&$format=json&$orderby=LogStart desc", false, "", (xhr) => {
+
     if (xhr.readyState == 4 && sidebar.active) {
 
-      var resp;
-      try{
-        resp = JSON.parse(xhr.responseText);
-      }catch(e){
-        // var getLogsTimer1 = setTimeout(getLogs("https://l700299-tmn.hci.eu2.hana.ondemand.com", "messageListDev", "updatedTextDev"), 18000);
-        // var alerting = setTimeout(alert, 3000 , "Please login to the below URL First: " +  URL + "/itspaces/shell/monitoring/Overview");
-        if(URL.substring(8,15) == 'l700299'){
-          var dev = document.getElementById('outerFrameOne');
-          dev.style = 'display:grid';
-          var beautifyButton = document.createElement("button");
-          beautifyButton.id = URL.substring(8,15);
-          beautifyButton.innerText = "Click here to open \n" + URL + "/itspaces/shell/monitoring/Overview";
-          beautifyButton.onclick = (event) => {
-            // alert("Hello");
-            // location.href = URL;
-            window.open(URL + "/itspaces/shell/monitoring/Overview", '_blank');
-            var getLogsTimer1 = setTimeout(getLogs, 3000, URL, "messageListDev", "updatedTextDev");
-            document.getElementById("topBarOne").style = "display:block";
-            document.getElementById("contentOne").style = "display:block";
-            document.getElementById(URL.substring(8,15)).style = "display:none";
-          }
-          // dev.innerHTML = '';
-          document.getElementById("topBarOne").style = "display:none";
-          document.getElementById("contentOne").style = "display:none";
-          dev.append(beautifyButton);
-          // beautifyButton; 
-          // "<button onclick = 'location.href = ("+ URL + ");' id='"+URL.substring(8,15)+"'>Open "+URL.substring(8,15)+"</button>";  
-        }else if(URL.substring(8,15) == 'l701171'){
-          var dev = document.getElementById('outerFrameTwo');
-          dev.style = 'display:grid';
-          var beautifyButton = document.createElement("button");
-          beautifyButton.id = URL.substring(8,15);
-          beautifyButton.innerText = "Click here to open \n" + URL + "/itspaces/shell/monitoring/Overview";
-          beautifyButton.onclick = (event) => {
-            // alert("Hello");
-            // location.href = URL;
-            window.open(URL + "/itspaces/shell/monitoring/Overview", '_blank');
-            var getLogsTimer2 = setTimeout(getLogs, 3000, URL, "messageListProd", "updatedTextProd");
-            document.getElementById("topBarTwo").style = "display:block";
-            document.getElementById("contentTwo").style = "display:block";
-            document.getElementById(URL.substring(8,15)).style = "display:none";
-          }
-          // dev.innerHTML = '';
-          document.getElementById("topBarTwo").style = "display:none";
-          document.getElementById("contentTwo").style = "display:none";
-          dev.append(beautifyButton);
-          
-        }
-        
-
-      }
+      var resp = JSON.parse(xhr.responseText);
       resp = resp.d.results;
 
       //    document.getElementById('iflowName').innerText = cpiData.integrationFlowId;
 
-      let updatedText = document.getElementById(updateTextId);
+      let updatedText = document.getElementById('updatedText');
 
       updatedText.innerHTML = "<span>Last update:<br>" + new Date().toLocaleString("de-DE") + "</span>";
 
@@ -211,7 +157,7 @@ async function getLogs(URL, messageListId, updateTextId) {
 
           let thisMessageHashList = [];
 
-          let messageList = document.getElementById(messageListId);
+          let messageList = document.getElementById('messageList');
           messageList.innerHTML = "";
           var lastDay;
 
@@ -223,10 +169,9 @@ async function getLogs(URL, messageListId, updateTextId) {
             //add offset to utc time. The offset is not correct anymore but isostring can be used to show local time
             date.setTime(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
             date = date.toISOString();
-            // console.log(date + " ");
+
             if (date.substr(0, 10) != lastDay) {
               messageList.appendChild(createRow([date.substr(0, 10)]));
-              // console.log(messageList.toString() + " " + date)
               lastDay = date.substr(0, 10);
             }
 
@@ -239,47 +184,31 @@ async function getLogs(URL, messageListId, updateTextId) {
             // logLevel[0] = logLevel[0].toUpperCase();
 
             let traceButton = createElementFromHTML("<button id='trace--" + i + "' class='" + resp[i].MessageGuid + flash + "'>" + loglevel + "</button>");
-            let infoButton = createElementFromHTML("<button id='info--" + i + "' class='" + resp[i].AlternateWebLink + flash + "'>"
-            + "<i class='material-icons "+ resp[i].MessageGuid + "' style='font-size: 0.9rem;display: inline;vertical-align: text-top;" + "" + "'>"+"list_alt"+"</i>" + "<span>Attachments</span>"+
-            // +"<span data-sap-ui-icon-content='' class='sapUiIcon sapUiIconMirrorInRTL' style='font-family: SAP-icons; font-size: 0.9rem;'></span>"+
-            "</button>");
+            let infoButton = createElementFromHTML("<button id='info--" + i + "' class='" + resp[i].AlternateWebLink + flash + "'><span data-sap-ui-icon-content='' class='sapUiIcon sapUiIconMirrorInRTL' style='font-family: SAP-icons; font-size: 0.9rem;'></span></button>");
 
             //let listItem = document.createElement("div");
             //listItem.classList.add("cpiHelper_messageListItem")
-
-
-
             let statusColor = "#008000";
-            // let statusIcon = "";
-            let statusIcon = "done";
+            let statusIcon = "";
             if (resp[i].Status == "PROCESSING") {
               statusColor = "#FFC300";
-              // statusIcon = "";
-              statusIcon="query_builder"
+              statusIcon = "";
             }
             if (resp[i].Status == "FAILED") {
               statusColor = "#C70039";
-              // statusIcon = "";
-              statusIcon= "error_outline";
+              statusIcon = "";
             }
-
-
-
             //listItem.style["color"] = statusColor;
-{/* <span>" +resp[i].IntegrationFlowName + "</span> */}
+
             let inlineTraceButton = createElementFromHTML("<button class='" + resp[i].MessageGuid + flash + " cpiHelper_inlineInfo-button' style='cursor: pointer;'>" + date.substr(11, 8) + "</button>");
             activeInlineItem == inlineTraceButton.classList[0] && inlineTraceButton.classList.add("cpiHelper_inlineInfo-active");
 
 
-            let statusicon = createElementFromHTML("<button class='" + resp[i].MessageGuid + " cpiHelper_sidebar_iconbutton'>" + 
-            // "<span data-sap-ui-icon-content='" + statusIcon + "' class='" + resp[i].MessageGuid + " sapUiIcon sapUiIconMirrorInRTL' style='font-family: SAP-icons; font-size: 0.9rem; color:" + statusColor + ";'> </span>"
-
-            "<i class='material-icons "+ resp[i].MessageGuid + "' style='color:" + statusColor + "'>"+statusIcon+"</i>"
-            + "</button>");
+            let statusicon = createElementFromHTML("<button class='" + resp[i].MessageGuid + " cpiHelper_sidebar_iconbutton'><span data-sap-ui-icon-content='" + statusIcon + "' class='" + resp[i].MessageGuid + " sapUiIcon sapUiIconMirrorInRTL' style='font-family: SAP-icons; font-size: 0.9rem; color:" + statusColor + ";'> </span></button>");
 
             statusicon.onmouseover = (e) => {
 
-              infoPopupOpen(URL, e.currentTarget.classList[0]);
+              infoPopupOpen(e.currentTarget.classList[0]);
               infoPopupSetTimeout(null);
             };
             statusicon.onmouseout = (e) => {
@@ -294,7 +223,7 @@ async function getLogs(URL, messageListId, updateTextId) {
 
               } else {
                 hideInlineTrace();
-                var inlineTrace = await showInlineTrace(URL, e.currentTarget.classList[0]);
+                var inlineTrace = await showInlineTrace(e.currentTarget.classList[0]);
                 if (inlineTrace) {
                   showSnackbar("Inline Debugging Activated");
                   e.target.classList.add("cpiHelper_inlineInfo-active");
@@ -311,28 +240,13 @@ async function getLogs(URL, messageListId, updateTextId) {
               //   e.target.style.backgroundColor = 'red';
 
             };
-            let iFlowName = createElementFromHTML("<button id='name--" + i + "' class='tooltip " + resp[i].MessageGuid + flash + "'>" + resp[i].IntegrationFlowName + 
-            // "<span id = 'infos--"+ i +"'class='tooltiptext'>"+
-            // "" +"</span>"+
-            "</button>");
-            // let info = document.createElement('span');
-            // spd.id = 'infos--' + i;
-            // spd.classList.add("tooltiptext");
-            // spd.innerHTML = ;
-            iFlowName.appendChild(infoButton);
-            // infoDoc = document.querySelector("#infos--"+i+"");
-            // console.log(infoDoc);
-            // infoDoc.appendChild(infoButton);
 
-            // infoBat = document.getElementById("infos--"+ i);
-            // infoBat.appendChild(infoButton);
-            // let iFlowName = createElementFromHTML("<button class='" + resp[i].MessageGuid + " cpiHelper_sidebar_iconbutton'><span data-sap-ui-icon-content='" + statusIcon + "' class='" + resp[i].MessageGuid + " sapUiIcon sapUiIconMirrorInRTL' style='font-family: SAP-icons; font-size: 0.9rem; color:" + statusColor + ";'> </span></button>");
             //      listItem.appendChild(statusicon);
             //      listItem.appendChild(inlineTraceButton);
             //      listItem.appendChild(infoButton);
             //      listItem.appendChild(traceButton);
 
-            messageList.appendChild(createRow([statusicon, inlineTraceButton, iFlowName, infoButton, traceButton]));
+            messageList.appendChild(createRow([statusicon, inlineTraceButton, infoButton, traceButton]));
 
             infoButton.addEventListener("click", (a) => {
               openInfo(a.currentTarget.classList[0]);
@@ -341,7 +255,7 @@ async function getLogs(URL, messageListId, updateTextId) {
 
             traceButton.addEventListener("click", (a) => {
 
-              openTrace(URL, a.currentTarget.classList[0]);
+              openTrace(a.currentTarget.classList[0]);
 
             });
 
@@ -350,23 +264,10 @@ async function getLogs(URL, messageListId, updateTextId) {
         }
 
       }
-      if(URL.match(/l700299/gi)){
-        console.log("l70299 " + URL);
-        var getLogsTimer1 = setTimeout(getLogs, 30000, "https://l700299-tmn.hci.eu2.hana.ondemand.com", "messageListDev", "updatedTextDev");
-      }
-      if(URL.match(/l701171/gi)){
-        console.log("l701171 "  + URL);
-        var getLogsTimer2 = setTimeout(getLogs, 30000, "https://l701171-tmn.hci.eu2.hana.ondemand.com", "messageListProd", "updatedTextProd");
-      }
       //new update in 3 seconds
-      // if (sidebar.active) {
-        // clearTimeout(getLogsTimer);
-        // clearTimeout(getLogsTimer1);
-        // clearTimeout(getLogsTimer2);
-    
-        // var getLogsTimer1 = setTimeout(getLogs("https://l700299-tmn.hci.eu2.hana.ondemand.com", "messageListDev", "updatedTextDev"), 18000);
-        // var getLogsTimer2 = setTimeout(getLogs("https://l701171-tmn.hci.eu2.hana.ondemand.com", "messageListProd", "updatedTextProd"), 150000);
-      // }
+      if (sidebar.active) {
+        var getLogsTimer = setTimeout(getLogs, 3000);
+      }
     }
   });
 }
@@ -591,27 +492,26 @@ async function clickTrace(e) {
     result += "</table>";
     return result;
   }
-  var getTraceTabContent = async function (URL, object) {
-    // console.log("url:" + URL);
-    var traceId = JSON.parse(await makeCallPromise("GET", URL + "/itspaces/odata/api/v1/MessageProcessingLogRunSteps(RunId='" + object.runId + "',ChildCount=" + object.childCount + ")/TraceMessages?$format=json", true)).d.results[0].TraceId;
+  var getTraceTabContent = async function (object) {
+    var traceId = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/MessageProcessingLogRunSteps(RunId='" + object.runId + "',ChildCount=" + object.childCount + ")/TraceMessages?$format=json", true)).d.results[0].TraceId;
 
     let html = "";
     if (object.traceType == "properties") {
-      let elements = JSON.parse(await makeCallPromise("GET", URL + "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/ExchangeProperties?$format=json", true)).d.results;
+      let elements = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/ExchangeProperties?$format=json", true)).d.results;
       html = formatHeadersAndPropertiesToTable(elements);
     }
     if (object.traceType == "headers") {
-      let elements = JSON.parse(await makeCallPromise("GET", URL + "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/Properties?$format=json", true)).d.results;
+      let elements = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/Properties?$format=json", true)).d.results;
       html = formatHeadersAndPropertiesToTable(elements);
     }
 
     if (object.traceType == "trace") {
-      let elements = await makeCallPromise("GET", URL + "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/$value", true);
+      let elements = await makeCallPromise("GET", "/itspaces/odata/api/v1/TraceMessages(" + traceId + ")/$value", true);
       html = formatTrace(elements, object.runId + "_" + object.childCount);
     }
 
     if (object.traceType == "logContent") {
-      let elements = JSON.parse(await makeCallPromise("GET", URL + "/itspaces/odata/api/v1/MessageProcessingLogRunSteps(RunId='" + object.runId + "',ChildCount=" + object.childCount + ")/?$expand=RunStepProperties&$format=json", true)).d.RunStepProperties.results;
+      let elements = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/MessageProcessingLogRunSteps(RunId='" + object.runId + "',ChildCount=" + object.childCount + ")/?$expand=RunStepProperties&$format=json", true)).d.RunStepProperties.results;
       html = formatLogContent(elements);
     }
 
@@ -632,7 +532,7 @@ async function clickTrace(e) {
     var branch = targetElements[n].BranchId
     try {
 
-      var traceId = JSON.parse(await makeCallPromise("GET", URL + "/itspaces/odata/api/v1/MessageProcessingLogRunSteps(RunId='" + runId + "',ChildCount=" + childCount + ")/TraceMessages?$format=json", true)).d.results[0].TraceId;
+      var traceId = JSON.parse(await makeCallPromise("GET", "/itspaces/odata/api/v1/MessageProcessingLogRunSteps(RunId='" + runId + "',ChildCount=" + childCount + ")/TraceMessages?$format=json", true)).d.results[0].TraceId;
 
       var objects = [{
         label: "Properties",
@@ -822,11 +722,11 @@ async function createTabHTML(objects, idPart, overwriteActivePosition) {
 }
 
 var inlineTraceElements;
-async function createInlineTraceElements(URL, MessageGuid) {
+async function createInlineTraceElements(MessageGuid) {
   return new Promise(async (resolve, reject) => {
     inlineTraceElements = [];
 
-    var logRuns = await getMessageProcessingLogRuns(URL, MessageGuid);
+    var logRuns = await getMessageProcessingLogRuns(MessageGuid);
 
     if (logRuns == null || logRuns.length == 0) {
       return resolve(0);
@@ -849,10 +749,10 @@ async function createInlineTraceElements(URL, MessageGuid) {
 
 
 var onClicKElements = [];
-async function showInlineTrace(URL, MessageGuid) {
+async function showInlineTrace(MessageGuid) {
   return new Promise(async (resolve, reject) => {
     var observerInstalled = false;
-    var logRuns = await createInlineTraceElements(URL, MessageGuid);
+    var logRuns = await createInlineTraceElements(MessageGuid);
 
     if (logRuns == null || logRuns == 0) {
       return resolve(null);
@@ -996,52 +896,6 @@ function buildButtonBar() {
       if (sidebar.active) {
         sidebar.deactivate();
       }
-    }
-    if (element) {
-
-      whatsNewCheck();
-
-      //create Trace Button
-      var tracebutton = createElementFromHTML('<button id="__buttonxx" data-sap-ui="__buttonxx" title="Enable traces" class="sapMBtn sapMBtnBase spcHeaderActionButton" style="display: inline-block; margin-left: 0px;"><span id="__buttonxx-inner" class="sapMBtnHoverable sapMBtnInner sapMBtnText sapMBtnTransparent sapMFocusable"><span class="sapMBtnContent" id="__button12-content"><bdi id="__button12-BDI-content">Trace</bdi></span></span></button>');
-      //Create Toggle Message Bar Button
-      var messagebutton = createElementFromHTML(' <button id="__buttonxy" data-sap-ui="__buttonxy" title="Messages" class="sapMBtn sapMBtnBase spcHeaderActionButton" style="display: inline-block;"><span id="__buttonxy-inner" class="sapMBtnHoverable sapMBtnInner sapMBtnText sapMBtnTransparent sapMFocusable"><span class="sapMBtnContent" id="__button13-content"><bdi id="__button13-BDI-content">Messages</bdi></span></span></button>');
-      var infobutton = createElementFromHTML(' <button id="__buttoninfo" data-sap-ui="__buttoninfo" title="Info" class="sapMBtn sapMBtnBase spcHeaderActionButton" style="display: inline-block;"><span id="__buttonxy-inner" class="sapMBtnHoverable sapMBtnInner sapMBtnText sapMBtnTransparent sapMFocusable"><span class="sapMBtnContent" id="__button13-content"><bdi id="__button13-BDI-content">Info</bdi></span></span></button>');
-
-      //append buttons
-      // area = document.querySelector("[id*='--iflowObjectPageHeader-actions']")
-      area = document.querySelector("[id='__title1']")
-      area.appendChild(createElementFromHTML("<br />"));
-      area.appendChild(tracebutton);
-      area.appendChild(messagebutton);
-      area.appendChild(infobutton);
-
-
-      tracebutton.addEventListener("click", (btn) => {
-        setLogLevel("TRACE", cpiData.integrationFlowId);
-      })
-
-      messagebutton.addEventListener("click", (btn) => {
-        if (sidebar.active) {
-          sidebar.deactivate();
-        } else {
-          sidebar.init();
-        }
-      });
-
-      infobutton.addEventListener("click", (btn) => {
-        getIflowInfo(openIflowInfoPopup);
-      })
-      return;
-    } else {
-      setTimeout(function () {
-        waitForElementToDisplay(selector, time);
-      }, time);
-    }
-  }
-  else {
-    setTimeout(function () {
-      waitForElementToDisplay(selector, time);
-    }, time);
       else {
         sidebar.init();
       }
@@ -1391,67 +1245,29 @@ var sidebar = {
   //function to deactivate the sidebar
   deactivate: function () {
     this.active = false;
-    clearTimeout(getLogsTimer1);
-    clearTimeout(getLogsTimer2);
+    clearTimeout(getLogsTimer);
     document.getElementById("cpiHelper_content").remove();
   },
 
   //function to create and initialise the message sidebar
-  init: function (URL) {
+  init: function () {
     this.active = true;
 
     //create sidebar div
     var elem = document.createElement('div');
     elem.innerHTML = `
-    <div id="systemOne" ><div id="cpiHelper_contentheader">Development Server
-    <span id='sidebar_modal_close' class='cpiHelper_closeButton'>X</span>
-    </div> 
-    <div id="outerFrameOne">
-    <div id="topBarOne" style="display:flex;"><div id="updatedTextDev" class="contentText"></div>
-    <button><div id="settings" class="material-icons" style="align:center; display:inline">settings</div></button>
+    <div id="cpiHelper_contentheader">ConVista CPI Helper<span id='sidebar_modal_close' class='cpiHelper_closeButton'>X</span></div> 
+    <div id="outerFrame">
+    <div id="updatedText" class="contentText"></div>
+    
+    <div><table id="messageList" class="contentText"></table></div>
+    
     
     </div>
-    <div id="contentOne" ><table id="messageListDev" class="contentText"></table></div>
-    
-    
-    </div></div>
-    <div id="systemTwo" ><div id="cpiHelper_contentheader">Production Server
-    <span id='sidebar_modal_close' class='cpiHelper_closeButton'>X</span>
-    </div> 
-    <div id="outerFrameTwo">
-    <div id="topBarTwo" style="display:flex;">    
-      <div id="updatedTextProd" class="contentText"></div>
-    </div>
-
-    <div id="contentTwo"><table id="messageListProd" class="contentText"></table></div>
-    
-    
-    </div></div>
     `;
-    // todo: add timer option in settings.
-    // todo: add URL1 and URL2 in settings.
-    // todo: add a option to go to Connectivity test directly
-    // todo: add a option to go to monitoring of all the messages for a specific iFlow Name.
-    // todo: number of transactions to be displayed
     elem.id = "cpiHelper_content";
     elem.classList.add("cpiHelper");
     document.body.appendChild(elem);
-
-    var textElement = `
-    <div id="cpiHelper_bigPopup_outerFrame">
-    <div id="cpiHelper_bigPopup_contentheader">ConVista CPI Helper <span id="cpiHelper_bigPopup_close" class="cpiHelper_closeButton">X</div>
-      <div id="cpiHelper_bigPopup_content">
-      Please Wait...
-    </div> 
-    </div>
-    `;
- 
- 
- 
-   document.getElementById("settings").onclick = (e)=>{
-     alert('testing phase');
-    // document.appendChild(createElementFromHTML(textElement));
-   }
 
     //add close button
     var span = document.getElementById("sidebar_modal_close");
@@ -1464,10 +1280,9 @@ var sidebar = {
 
     //lastMessageHashList must be empty when message sidebar is created
     cpiData.lastMessageHashList = [];
-    //refresh messages
-    getLogs(URL, "messageListDev", "updatedTextDev");
-    getLogs("https://l701171-tmn.hci.eu2.hana.ondemand.com", "messageListProd", "updatedTextProd");
 
+    //refresh messages
+    getLogs();
   }
 };
 
@@ -1495,7 +1310,7 @@ function removeElementsWithClass(classToDelete) {
   return true;
 }
 
-async function infoPopupOpen(URL, MessageGuid) {
+async function infoPopupOpen(MessageGuid) {
   var x = document.getElementById("cpiHelper_sidebar_popup");
   if (!x) {
     x = document.createElement('div');
@@ -1513,7 +1328,7 @@ async function infoPopupOpen(URL, MessageGuid) {
   x.className = "show";
 
   ///MessageProcessingLogRuns('AF5eUbNwAc1SeL_vdh09y4njOvwO')/RunSteps?$inlinecount=allpages&$format=json&$top=500
-  var resp = await getMessageProcessingLogRuns(URL, MessageGuid)
+  var resp = await getMessageProcessingLogRuns(MessageGuid)
 
   var y = document.getElementById("cpiHelper_sidebar_popup");
   y.innerText = "";
@@ -1528,7 +1343,6 @@ async function infoPopupOpen(URL, MessageGuid) {
   let error = false;
   for (var i = 0; i < resp.length; i++) {
     if (resp[i].Error) {
-      console.log(resp[i].Error);
       error = true;
       let errorText = createErrorMessageElement(resp[i].Error);
       y.appendChild(errorText);
@@ -1567,14 +1381,13 @@ function createErrorMessageElement(message) {
   return errorContainer;
 }
 
-async function getMessageProcessingLogRuns(URL, MessageGuid) {
-  // console.log("time" + URL);
-  return makeCallPromise("GET", URL + "/itspaces/odata/api/v1/MessageProcessingLogs('" + MessageGuid + "')/Runs?$inlinecount=allpages&$format=json&$top=500", true).then((responseText) => {
+async function getMessageProcessingLogRuns(MessageGuid) {
+  return makeCallPromise("GET", "/itspaces/odata/api/v1/MessageProcessingLogs('" + MessageGuid + "')/Runs?$inlinecount=allpages&$format=json&$top=500", true).then((responseText) => {
     var resp = JSON.parse(responseText);
     console.log(resp);
     return resp.d.results[0].Id;
   }).then((runId) => {
-    return makeCallPromise("GET", URL + "/itspaces/odata/api/v1/MessageProcessingLogRuns('" + runId + "')/RunSteps?$inlinecount=allpages&$format=json&$top=500", true);
+    return makeCallPromise("GET", "/itspaces/odata/api/v1/MessageProcessingLogRuns('" + runId + "')/RunSteps?$inlinecount=allpages&$format=json&$top=500", true);
   }).then((response) => {
     return JSON.parse(response).d.results;
   }).catch((e) => {
