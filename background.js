@@ -3,6 +3,22 @@
 
 'use strict';
 
+chrome.browserAction.onClicked.addListener(
+  
+  // function(tab){
+  // chrome.tabs.create({
+  //     'url': chrome.runtime.getURL("index.html#window")
+  // });
+  // function(activeTab){
+  // var newURL = "http://www.youtube.com/watch?v=oHg5SJYRHA0";
+  // chrome.tabs.create({ url: newURL });
+  function(tab) {
+    alert("hello");
+    chrome.tabs.create({'url': chrome.extension.getURL('f.html')}, function(tab) {
+      // Tab opened.
+    });
+});
+
 //activate on this site
 chrome.runtime.onInstalled.addListener(function () {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {

@@ -9,7 +9,10 @@
     "declarativeContent",
     "storage",
     "https://*.hana.ondemand.com/itspaces",
-    "webRequest"
+    "*chrome://*",
+    "webRequest",
+    "tabs",
+    "browserAction"
   ],
   "background": {
     "scripts": [
@@ -17,6 +20,9 @@
       "hot-reload.js"
     ],
     "persistent": true
+  },
+  "chrome_url_overrides":{
+    "newtab": "newtab.html"
   },
   "content_scripts": [
     {
@@ -30,7 +36,8 @@
       ],
       "css": [
         "/lib/prettify/prettify.css",
-        "contentScript.css"
+        "contentScript.css",
+        "logo.css"
       ]
     }
   ],

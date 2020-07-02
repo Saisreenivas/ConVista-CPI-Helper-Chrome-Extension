@@ -1,4 +1,128 @@
-/* whats new */
+<!DOCTYPE html>
+<html>
+
+<head>
+	<style>
+		#main {
+			width: 300px;
+			font-family: 'Arial', sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    
+    #systemOne, #systemTwo {
+      
+      /* display: inline-block;
+      margin: 5px;
+      width: 48%; */
+      float: left;
+      width: 50%;
+      padding: 2px;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      border-bottom: 1px dotted black;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+
+      /* Position the tooltip */
+      position: absolute;
+      z-index: 1;
+      top: 100%;
+      left: 20%;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+    }
+
+		/* unvisited link */
+		a:link {
+			color: #009fe3;
+			text-decoration: none;
+		}
+
+		/* visited link */
+		a:visited {
+			color: #009fe3;
+			text-decoration: none;
+		}
+
+		/* mouse over link */
+		a:hover {
+			color: #ff5722;
+			text-decoration: none;
+		}
+
+		#cpiHelper_contentheader {
+			padding: 10px;
+			font-weight: bold;
+			z-index: 10;
+			background-color: #009fe3;
+			color: #fff;
+		}
+
+		#cpiHelper_content:after {
+      content: "";
+      display: table;
+      clear: both;
+      /* padding: 3px; */
+      /* width: 50%; */
+      /* display: inline; */
+    }
+
+    #l700299{
+      width: auto;
+      height: auto;
+    }
+    
+    .cpiHelper #outerFrameOne, .cpiHelper #outerFrameTwo {
+      border: solid 1px #e1e1e1;
+      /* padding: 10px; */
+      overflow: auto;
+    /* height: 200px; */
+    /* height:100%; */
+      height: 90vh;
+    }
+
+    #cpiHelper_contentheader_prod {
+			padding: 10px;
+			font-weight: bold;
+			z-index: 10;
+			background-color: #009fe3;
+			color: #fff;
+		}
+
+		#cpiHelper_content_prod {
+      padding: 3px;
+      width: 50%;
+    }
+    
+    .cpiHelper #outerFrame_prod {
+      border: solid 1px #e1e1e1;
+      padding: 10px;
+      overflow: scroll;
+    /* height: 200px; */
+    /* height:100%; */
+      height: 85vh;
+    }
+
+		ul {
+			margin-top: 0.3em;
+		}
+
+		/* whats new */
 
 #cpiHelper_WhatsNew {
     margin: 25px;
@@ -115,34 +239,20 @@ color:white;
     to {bottom: 0; opacity: 0; }
   }
 
-  .cpiHelper #outerFrameOne, #outerFrameOne{
-    border: solid 1px #e1e1e1;
-    padding: 10px;
-    overflow: scroll;
-    /* height: 200px; */
-  }
 
-  .cpiHelper #outerFrameTwo{
-    border: solid 1px #e1e1e1;
-    padding: 10px;
-    overflow: scroll;
-    /* height: 200px; */
-  }
 
-  #cpiHelper_content{
+  #cpiHelper_contentone{
     position:fixed;
     z-index:400;
     background:#fbfbfb;
     top:100px;
     right:0px;
     /* width:200px; */
-    /* width: fit-content; */
-    width: 50%;
-    overflow: scroll;
+    width: fit-content;
     opacity: 0.9;
   }   
 
-  #cpiHelper_contentheader {
+  #cpiHelper_contentheaderone {
     padding: 10px;
     cursor: move;
     z-index: 10;
@@ -339,7 +449,8 @@ padding-left:5px;
 border-left: 0;
 }
 .cpiHelper table td {
-padding:4px;
+/* padding:4px; */
+padding:0px;
 border-top: 0px solid #ffffff;
 border-bottom:0px solid #e0e0e0;
 border-left: 0px solid #e0e0e0;
@@ -368,3 +479,59 @@ display:block;
 .cpiHelper li.L5, .cpiHelper li.L6, .cpiHelper li.L7, .cpiHelper li.L8 {
 list-style-type: decimal !important;
 }
+
+  </style>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body  stype="margin:0px;">
+	<div style="display:flex;"><div id="devUpdate"></div>
+	<div id="prodUpdate"></div></div>
+	<div id="main">
+		<div id="cpiHelper_contentheader">ConVista CPI Helper</div>
+		<div id="cpiHelper_content">
+			<div id="lastVisitedIflows"></div>
+			<div id="tenantUrls"></div>
+
+
+			<h3>General Links</h3>
+			<ul style="list-style-type:disc;">
+				<li><a href="https://help.sap.com/viewer/product/CLOUD_INTEGRATION/Cloud/" target="_blank">SAP CPI
+						Help</a></li>
+				<li><a href="https://help.sap.com/viewer/product/CLOUD_INTEGRATION/Cloud/en-US?task=develop_task"
+						target="_blank">SAP CPI
+						Development</a></li>
+				<li><a href="https://blogs.sap.com/2020/03/05/cpi-chrome-plugin-to-enhance-sap-cloud-platform-integration-usability/"
+						target="_blank">ConVista CPI Helper Blog Post</a></li>
+			</ul>
+
+
+			<p>This PlugIn was initiated by <a href=" https://convista.com" target="_blank">ConVista Consulting AG</a>.
+				Feel free to contribute at our
+				<a href="https://github.com/dbeck121/ConVista-CPI-Helper-Chrome-Extension" target="_blank">Github
+					Page</a>.</p>
+			<p id="cpihelper_version"></p>
+			<p>License: <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank">GNU GPL v3</a></p>
+		</div>
+	</div>
+
+	<script src="newtabext.js"></script>
+	<script src="newtab.js"></script>
+	<!-- <script>
+    //   var greeting = "hello, ";
+      var button = document.getElementById("mybutton");
+      button.person_name = "Bob";
+      button.addEventListener("click", function() {
+        alert(greeting + button.person_name + ".");
+      }, false);
+	</script> -->
+	<script>
+// 		function myFunction() {
+// //   document.getElementById("demo").innerHTML = "Iframe is loaded.";
+// 			setTimeout(function(){document.getElementById('__buttonxy2').click();} , 500);
+
+// 		}
+	</script>
+</body>
+
+</html>
